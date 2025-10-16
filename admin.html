@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Panel: Registered Students</title>
+  <link rel="stylesheet" href="freshers-party.css">
+</head>
+<body>
+  <header>
+    <h1>Admin Panel: Registered Students</h1>
+    <nav>
+      <a href="Freshers Party Agenda.html">Agenda</a> |
+      <a href="fresher-registration.html">Register</a> |
+      <a href="admin-login.html">Admin Login</a>
+    </nav>
+  </header>
+  <section>
+    <p style="color: green; font-weight: bold;">Welcome, Admin! Here are the registered student details:</p>
+    <button onclick="logout()" style="float:right;color:red;">Logout</button>
+    <table border="1" id="studentsTable">
+      <thead>
+        <tr><th>Sl. No.</th><th>Name</th><th>Email</th><th>Phone</th><th>Department</th><th>Gender</th><th>Actions</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+  <script>
+    if (!localStorage.getItem('adminLoggedIn')) {
+      window.location.href = 'admin-login.html';
+    }
+    function logout() {
+      localStorage.removeItem('adminLoggedIn');
+      window.location.href = 'admin-login.html';
+    }
+    function loadStudents() {
+      const students = JSON.parse(localStorage.getItem('freshers') || '[]');
+      const tbody = document.querySelector('#studentsTable tbody');
+      if (!students.length) {
+        tbody.innerHTML = '<tr><td colspan="6">No registrations yet.</td></tr>';
+      } else {
+        tbody.innerHTML = students.map((s, i) =>
+          `<tr>
+            <td>${i + 1}</td>
+            <td><input value="${s.name}" onchange="editStudent(${i}, 'name', this.value)"></td>
+            <td><input value="${s.email}" onchange="editStudent(${i}, 'email', this.value)"></td>
+            <td><input value="${s.phone}" onchange="editStudent(${i}, 'phone', this.value)"></td>
+            <td><input value="${s.department}" onchange="editStudent(${i}, 'department', this.value)"></td> 
+            <td>${s.gender}</td>
+            <td><button onclick="deleteStudent(${i})" style="color:red;">Delete</button></td>
+          </tr>`
+        ).join('');
+      }
+    }
+    function editStudent(index, field, value) {
+      const students = JSON.parse(localStorage.getItem('freshers') || '[]');
+      students[index][field] = value;
+      localStorage.setItem('freshers', JSON.stringify(students));
+    }
+    function deleteStudent(index) {
+      if (confirm('Are you sure you want to delete this student?')) {
+        const students = JSON.parse(localStorage.getItem('freshers') || '[]');
+        students.splice(index, 1);
+        localStorage.setItem('freshers', JSON.stringify(students));
+        loadStudents();
+      }
+    }
+    loadStudents();
+  </script>
+</body>
+</html>
