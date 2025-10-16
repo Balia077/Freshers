@@ -5,7 +5,126 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin Panel: Registered Students</title>
   <link rel="stylesheet" href="freshers-party.css">
+  <style>
+    /* --- Modern table & layout styling --- */
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    header {
+      background: #004aad;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    nav a {
+      color: #fff;
+      margin: 0 10px;
+      text-decoration: none;
+    }
+
+    section {
+      margin: 2rem auto;
+      width: 95%;
+      max-width: 1100px;
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1, h2 {
+      color: #004aad;
+    }
+
+    button {
+      cursor: pointer;
+      background: #004aad;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #0366d6;
+    }
+
+    .logout-btn {
+      float: right;
+      background: #e63946;
+    }
+
+    .logout-btn:hover {
+      background: #b22222;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background: #004aad;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background: #f2f2f2;
+    }
+
+    tr:hover {
+      background: #eaf2ff;
+    }
+
+    input {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 4px;
+      width: 90%;
+    }
+
+    /* --- Responsive design for mobile --- */
+    @media (max-width: 768px) {
+      section {
+        padding: 1rem;
+      }
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      th {
+        display: none;
+      }
+      td {
+        border: none;
+        padding: 10px;
+        text-align: left;
+        position: relative;
+      }
+      td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        color: #004aad;
+      }
+    }
+  </style>
 </head>
+
 <body>
   <header>
     <h1>Admin Panel: Registered Students</h1>
@@ -15,57 +134,97 @@
       <a href="admin-login.html">Admin Login</a>
     </nav>
   </header>
+
   <section>
     <p style="color: green; font-weight: bold;">Welcome, Admin! Here are the registered student details:</p>
-    <button onclick="logout()" style="float:right;color:red;">Logout</button>
-    <table border="1" id="studentsTable">
+    <button onclick="logout()" class="logout-btn">Logout</button>
+
+    <h2>Male Students</h2>
+    <table>
       <thead>
         <tr><th>Sl. No.</th><th>Name</th><th>Email</th><th>Phone</th><th>Department</th><th>Gender</th><th>Actions</th></tr>
       </thead>
-      <tbody></tbody>
+      <tbody id="maleTableBody"></tbody>
+    </table>
+
+    <h2>Female Students</h2>
+    <table>
+      <thead>
+        <tr><th>Sl. No.</th><th>Name</th><th>Email</th><th>Phone</th><th>Department</th><th>Gender</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="femaleTableBody"></tbody>
     </table>
   </section>
+
   <script>
+    // Redirect if not logged in
     if (!localStorage.getItem('adminLoggedIn')) {
       window.location.href = 'admin-login.html';
     }
+
     function logout() {
       localStorage.removeItem('adminLoggedIn');
       window.location.href = 'admin-login.html';
     }
+
     function loadStudents() {
       const students = JSON.parse(localStorage.getItem('freshers') || '[]');
-      const tbody = document.querySelector('#studentsTable tbody');
+      const maleTable = document.getElementById('maleTableBody');
+      const femaleTable = document.getElementById('femaleTableBody');
+
+      maleTable.innerHTML = '';
+      femaleTable.innerHTML = '';
+
       if (!students.length) {
-        tbody.innerHTML = '<tr><td colspan="6">No registrations yet.</td></tr>';
-      } else {
-        tbody.innerHTML = students.map((s, i) =>
-          `<tr>
-            <td>${i + 1}</td>
-            <td><input value="${s.name}" onchange="editStudent(${i}, 'name', this.value)"></td>
-            <td><input value="${s.email}" onchange="editStudent(${i}, 'email', this.value)"></td>
-            <td><input value="${s.phone}" onchange="editStudent(${i}, 'phone', this.value)"></td>
-            <td><input value="${s.department}" onchange="editStudent(${i}, 'department', this.value)"></td> 
-            <td>${s.gender}</td>
-            <td><button onclick="deleteStudent(${i})" style="color:red;">Delete</button></td>
-          </tr>`
-        ).join('');
+        maleTable.innerHTML = '<tr><td colspan="6">No male registrations yet.</td></tr>';
+        femaleTable.innerHTML = '<tr><td colspan="6">No female registrations yet.</td></tr>';
+        return;
+      }
+
+      const sorted = students.sort((a, b) => a.name.localeCompare(b.name));
+
+      const males = sorted.filter(s => s.gender.toLowerCase() === 'male');
+      const females = sorted.filter(s => s.gender.toLowerCase() === 'female');
+
+      const renderRows = (list, tableBody) => {
+        list.forEach((s, i) => {
+          const row = `
+            <tr>
+              <td data-label="Sl. No.">${i + 1}</td>
+              <td data-label="Name"><input value="${s.name}" onchange="editStudent('${s.email}','name',this.value)"></td>
+              <td data-label="Email"><input value="${s.email}" onchange="editStudent('${s.email}','email',this.value)"></td>
+              <td data-label="Phone"><input value="${s.phone}" onchange="editStudent('${s.email}','phone',this.value)"></td>
+              <td data-label="Department"><input value="${s.department}" onchange="editStudent('${s.email}','department',this.value)"></td>
+              <td data-label="Gender">${s.gender}</td>
+              <td data-label="Actions"><button onclick="deleteStudent('${s.email}')" style="background:#e63946;">Delete</button></td>
+            </tr>`;
+          tableBody.innerHTML += row;
+        });
+      };
+
+      renderRows(males, maleTable);
+      renderRows(females, femaleTable);
+    }
+
+    function editStudent(email, field, value) {
+      const students = JSON.parse(localStorage.getItem('freshers') || '[]');
+      const index = students.findIndex(s => s.email === email);
+      if (index > -1) {
+        students[index][field] = value;
+        localStorage.setItem('freshers', JSON.stringify(students));
       }
     }
-    function editStudent(index, field, value) {
-      const students = JSON.parse(localStorage.getItem('freshers') || '[]');
-      students[index][field] = value;
-      localStorage.setItem('freshers', JSON.stringify(students));
-    }
-    function deleteStudent(index) {
+
+    function deleteStudent(email) {
       if (confirm('Are you sure you want to delete this student?')) {
-        const students = JSON.parse(localStorage.getItem('freshers') || '[]');
-        students.splice(index, 1);
+        let students = JSON.parse(localStorage.getItem('freshers') || '[]');
+        students = students.filter(s => s.email !== email);
         localStorage.setItem('freshers', JSON.stringify(students));
         loadStudents();
       }
     }
-    loadStudents();
+
+    window.onload = loadStudents;
   </script>
 </body>
 </html>
